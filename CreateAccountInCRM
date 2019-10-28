@@ -1,0 +1,47 @@
+public SearchResult GetAccountFromAD()
+        {
+            directorySearcher.Filter = "(&((&(objectCategory=Person)(objectClass=User)))(mail=" + email + "))";
+            directorySearcher.SearchScope = SearchScope.Subtree;
+            SearchResult searchResult = directorySearcher.FindOne();
+            //var nickName = searchResult.GetDirectoryEntry().Properties["samaccountname"].Value.ToString();
+            return searchResult;
+        }
+        public Guid createCRMUser (SearchResult searchResult)
+        {
+            var objectFromAD = searchResult.GetDirectoryEntry().Properties["objectsid"];
+            var objectsid = (byte[])objectFromAD[0];
+            var sid = new SecurityIdentifier(objectsid, 0);
+            var account = sid.Translate(typeof(NTAccount)).ToString();
+            EntityReference team;
+            var company = searchResult.GetDirectoryEntry().Properties["company"].Value.ToString();
+            if (company.Contains("Головной Офис АО"))
+            {
+                var teamName = "Head Office - Bank";
+                team = orgContext.CreateQuery<Team>().Where(t => t.Name.Equals(teamName)).Select(t => t.BusinessUnitId).FirstOrDefault();
+            }
+            else
+            {
+                team = orgContext.CreateQuery<Team>().Where(t => t.Name == company).Select(t => t.BusinessUnitId).FirstOrDefault();
+            }
+
+            var msdyusd = orgContext.CreateQuery<msdyusd_configuration>().Select(ms => ms.Id).FirstOrDefault();
+
+            SystemUser user = new SystemUser()
+            {
+                FirstName = searchResult.GetDirectoryEntry().Properties["givenName"].Value.ToString(),
+                LastName = searchResult.GetDirectoryEntry().Properties["sn"].Value.ToString(),
+                Title = searchResult.GetDirectoryEntry().Properties["title"].Value.ToString(),
+                InternalEMailAddress = searchResult.GetDirectoryEntry().Properties["mail"].Value.ToString(),
+                DomainName = account,
+                Address1_Telephone1 = searchResult.GetDirectoryEntry().Properties["telephoneNumber"].Value.ToString(),
+                MobilePhone = searchResult.GetDirectoryEntry().Properties["mobile"].Value.ToString(),
+                AccessMode = new OptionSetValue(0),
+                fret_usersegment = new OptionSetValue(308370001),
+                BusinessUnitId = team,
+                IsLicensed = true,
+                CALType = new OptionSetValue(0),
+                msdyusd_USDConfigurationId = new EntityReference("msdyusd_configuration", msdyusd)
+            };
+            var userId = organizationService.Create(user);
+            return userId;
+        }
