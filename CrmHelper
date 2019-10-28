@@ -1,0 +1,37 @@
+  //helper for connection
+        public static class CRMServiceHelper
+    {        
+        internal static string DiscoveryUri = WebConfigurationManager.AppSettings["DiscoveryUri"];
+        internal static string UserName = WebConfigurationManager.AppSettings["UserName"];
+        internal static string Password = WebConfigurationManager.AppSettings["Password"];
+        internal static string OrganizationUri = WebConfigurationManager.AppSettings["OrganizationUri"];
+
+        public static OrganizationServiceProxy GetServiceProxy()
+        {
+            var serverConfig = new Configuration();            
+            serverConfig.DiscoveryUri = new Uri(DiscoveryUri);
+            serverConfig.Credentials = new ClientCredentials();
+            serverConfig.Credentials.UserName.UserName = UserName;
+            serverConfig.Credentials.UserName.Password = Password;
+            serverConfig.OrganizationUri = new Uri(OrganizationUri);
+
+            //// Connect to the Organization service.
+            //// The using statement assures that the service proxy will be properly disposed.
+            var serviceProxy = new OrganizationServiceProxy(serverConfig.OrganizationUri,
+                                                        serverConfig.HomeRealmUri,
+                                                        serverConfig.Credentials,
+                                                        serverConfig.DeviceCredentials);
+            serviceProxy.EnableProxyTypes();
+            serviceProxy.Authenticate();
+            return serviceProxy;
+        }
+        public class Configuration
+        {
+            public Uri DiscoveryUri;
+            public Uri OrganizationUri;
+            public Uri HomeRealmUri = null;
+            public ClientCredentials DeviceCredentials = null;
+            public ClientCredentials Credentials = null;
+            //public AuthenticationType EndpointType;
+        }
+    }
