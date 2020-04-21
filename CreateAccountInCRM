@@ -14,15 +14,7 @@ public SearchResult GetAccountFromAD()
             var account = sid.Translate(typeof(NTAccount)).ToString();
             EntityReference team;
             var company = searchResult.GetDirectoryEntry().Properties["company"].Value.ToString();
-            if (company.Contains("Головной Офис АО"))
-            {
-                var teamName = "Head Office - Bank";
-                team = orgContext.CreateQuery<Team>().Where(t => t.Name.Equals(teamName)).Select(t => t.BusinessUnitId).FirstOrDefault();
-            }
-            else
-            {
-                team = orgContext.CreateQuery<Team>().Where(t => t.Name == company).Select(t => t.BusinessUnitId).FirstOrDefault();
-            }
+            team = orgContext.CreateQuery<Team>().Where(t => t.Name == company).Select(t => t.BusinessUnitId).FirstOrDefault();
 
             var msdyusd = orgContext.CreateQuery<msdyusd_configuration>().Select(ms => ms.Id).FirstOrDefault();
 
